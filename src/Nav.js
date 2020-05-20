@@ -14,7 +14,7 @@ const StyledAppBar = styled(AppBar)`
 `;
 
 const StyledToolbar = styled(Toolbar)`
-  justify-content: space-between;
+  justify-content: flex-end;
 `
 
 const StyledLink = styled(Link)`
