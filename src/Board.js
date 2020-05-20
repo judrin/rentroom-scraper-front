@@ -20,6 +20,7 @@ function Board() {
 
   const [ items, setItems ] = useState([]);
   const [ markedItems, setMarkedItems ] = useState({});
+  const [ savedItems, setSavedItems ] = useState({});
   const [ anchorEl, setAnchorEl ] = React.useState(null);
   const [ otherItems, setOtherItems ] = React.useState([]);
 
@@ -27,12 +28,14 @@ function Board() {
   const popupId = open ? 'simple-popover' : undefined;
 
   useEffect(() => {
-    const storagedItems = localStorage.getItem('markedItems');
-    const parsedMarkedItems = storagedItems ? JSON.parse(storagedItems) : {};
+    const storagedMarkedItems = localStorage.getItem('markedItems');
+    const storagedSavedItems = localStorage.getItem('savedItems');
+    const parsedMarkedItems = storagedMarkedItems ? JSON.parse(storagedMarkedItems) : {};
+    const parsedSavedItems = storagedSavedItems ? JSON.parse(storagedSavedItems) : {};
 
     axios.get('https://d3azinm4se.execute-api.ca-central-1.amazonaws.com/dev/posts')
     .then(response => {
-      const data = response.data.result.Items
+      const data = response.data.result
       const lists = [];
       const writerLists = {};
 
@@ -46,11 +49,14 @@ function Board() {
         const dd = date.getDate();
         list.date = `${yy}-${('0' + mm).slice(-2)}-${dd}`;
         list.marked = false;
+        list.saved = false;
 
-        if (parsedMarkedItems[list.writer]) {
-          if (parsedMarkedItems[list.writer].includes(list.title)) {
-            list.marked = true;
-          }
+        if (parsedMarkedItems[list.id]) {
+          list.marked = true;
+        }
+
+        if (parsedSavedItems[list.id]) {
+          list.saved = true;
         }
 
         if (writerLists[list.writer]) {
@@ -66,6 +72,7 @@ function Board() {
 
       setItems(lists);
       setMarkedItems(parsedMarkedItems);
+      setSavedItems(parsedSavedItems);
     })
   }, []);
 
@@ -78,32 +85,48 @@ function Board() {
     setAnchorEl(null);
   };
 
-  const handleMarkClick = (writer, title, toggle = true) => {
-    const lists = markedItems[writer] || [];
-    const updatedLists = lists.filter(list => list !== title);
-
-    if (lists.length === updatedLists.length) {
-      updatedLists.push(title);
-    } else if (!toggle) {
-      return;
-    }
-
-    const updatedMarkedItems = {
-      ...markedItems,
-      [writer]: updatedLists
-    }
-
-    const updatedItems = items.map(item => {
-      if (item.writer === writer && item.title === title) {
-        item.marked = !item.marked;
+  const handleMarkClick = (id) => {
+    if (!markedItems[id]) {
+      const updatedMarkedItems = {
+        ...markedItems,
+        [id]: true
       }
+      
+      const updatedItems = items.map(item => {
+        if (item.id === id) {
+          item.marked = true;
+        }
+        return item;
+      })
 
+      setItems(updatedItems);
+      setMarkedItems(updatedMarkedItems);
+      localStorage.setItem('markedItems', JSON.stringify(updatedMarkedItems));
+    }
+  }
+
+  const handleSaveClick = (id) => {
+    const newSavedItems = { ...savedItems };
+    const updatedItems = items.map(item => {
+      if (item.id === id) {
+        item.saved = !item.saved;
+
+        if (newSavedItems[id]) {
+          delete newSavedItems[id];
+        } else {
+          newSavedItems[id] = {
+            ...item
+          };
+
+          delete newSavedItems[id].otherList;
+        }
+      }
       return item;
     })
 
-    localStorage.setItem('markedItems', JSON.stringify(updatedMarkedItems));
-    setMarkedItems(updatedMarkedItems);
     setItems(updatedItems);
+    setSavedItems(newSavedItems);
+    localStorage.setItem('savedItems', JSON.stringify(newSavedItems));
   }
 
   return (
@@ -119,9 +142,11 @@ function Board() {
               href={item.href}
               date={item.date}
               marked={item.marked}
+              saved={item.saved}
               otherList={item.otherList}
               countClick={handlePopupClick}
               markClick={handleMarkClick}
+              saveClick={handleSaveClick}
             />
           ))}
         </Inner>

@@ -1,32 +1,18 @@
 import React from 'react';
 import styled from 'styled-components'
 import { Grid, Paper } from '@material-ui/core';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
+import BookmarkIcon from '@material-ui/icons/Bookmark';
 
-const defaultIconStyle = `
+const SaveIcon = styled(BookmarkIcon)`
   position: absolute;
   right: 5px;
-  top: 3px;
+  top: -6px;
   cursor: pointer;
   z-index: 1;
-`
-
-const UnCheckedIcon = styled(CheckCircleOutlineIcon)`
-  ${defaultIconStyle}
-  color: #bbb;
+  color: ${props => props.saved ? '#e74c3c' : '#bbb'};
 
   &:hover {
-    color: #2980b9;
-  }
-`
-
-const CheckedIcon = styled(CheckCircleIcon)`
-  ${defaultIconStyle}
-  color: #2980b9;
-
-  &:hover {
-    color: #2c3e50;
+    color: #e74c3c;
   }
 `
 
@@ -84,12 +70,25 @@ const StyledPaper = styled(Paper)`
   }
 `
 
-function Item({ id, title, writer, href, date, otherList, marked, countClick, markClick }) {
+function Item({ 
+  id,
+  title,
+  writer,
+  href,
+  date,
+  otherList,
+  marked,
+  saved,
+  countClick,
+  markClick,
+  saveClick 
+}) {
   return (
     <StyledPaper marked={marked ? 1 : 0}>
-      {marked 
-      ? <CheckedIcon onClick={() => markClick(writer, title)} /> 
-      : <UnCheckedIcon onClick={() => markClick(writer, title)} />}
+      <SaveIcon 
+        saved={saved ? 1 : 0}
+        onClick={() => saveClick(id)} 
+      />
       <GridContainer container spacing={2}>
         <Grid item xs={12}>
           <Inner>
@@ -97,7 +96,7 @@ function Item({ id, title, writer, href, date, otherList, marked, countClick, ma
               <a 
                 href={href} 
                 target="_blank"
-                onClick={() => markClick(writer, title, false)}
+                onClick={() => markClick(id)}
                 rel="noopener noreferrer">
                 {title}
               </a>
@@ -105,7 +104,9 @@ function Item({ id, title, writer, href, date, otherList, marked, countClick, ma
             <Info>
               <Writer>글쓴이: {writer}</Writer>
               <PostDate>{date}</PostDate>
-              <Count onClick={(event) => countClick(event, otherList)}>작성자의 다른글: {otherList.length}</Count>
+              {otherList.length > 0 
+              ? <Count onClick={(event) => countClick(event, otherList)}>작성자의 다른글: {otherList.length}</Count>
+              : null}
             </Info>
           </Inner>
         </Grid>
