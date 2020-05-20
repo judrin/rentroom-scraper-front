@@ -39,7 +39,7 @@ function Board() {
       const lists = [];
       const writerLists = {};
 
-      for (let i = data.length - 1; i >= 0; i--) {
+      for (let i = 0; i < data.length; i++) {
         const list = { ...data[i] };
         list.otherList = [];
 
