@@ -1,10 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 
 const globalStyles = createGlobalStyle`
-    html, body, #root {
-      height: 100%;
-    }
-
     body {
       background-color: #282c34;
       margin: 0;
