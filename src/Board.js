@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Container } from '@material-ui/core';
 import axios from 'axios';
+import debounce from 'lodash.debounce';
 
 import Item from './Item';
 import Popup from './Popup';
@@ -18,11 +19,15 @@ const Inner = styled.div`
 
 function Board() {
 
-  const [ items, setItems ] = useState([]);
-  const [ markedItems, setMarkedItems ] = useState({});
-  const [ savedItems, setSavedItems ] = useState({});
-  const [ anchorEl, setAnchorEl ] = React.useState(null);
-  const [ otherItems, setOtherItems ] = React.useState([]);
+  const [ data, setData ] = useState({
+    items: [],
+    markedItems: {},
+    savedItems: {}
+  });
+  const [ anchorEl, setAnchorEl ] = useState(null);
+  const [ otherItems, setOtherItems ] = useState([]);
+  const [ loading, setLoading ] = useState(true);
+  const [ maxLoadingItems, setMaxLoadingItems ] = useState(50);
 
   const open = Boolean(anchorEl);
   const popupId = open ? 'simple-popover' : undefined;
@@ -70,9 +75,14 @@ function Board() {
         lists.push(list);
       }
 
-      setItems(lists);
-      setMarkedItems(parsedMarkedItems);
-      setSavedItems(parsedSavedItems);
+      console.log('before set states');
+
+      setData({
+        items: lists,
+        markedItems: parsedMarkedItems,
+        savedItems: parsedSavedItems
+      });
+      setLoading(false);
     })
   }, []);
 
@@ -86,6 +96,9 @@ function Board() {
   };
 
   const handleMarkClick = (id) => {
+    console.log(data);
+    const { items, markedItems } = data;
+
     if (!markedItems[id]) {
       const updatedMarkedItems = {
         ...markedItems,
@@ -97,15 +110,19 @@ function Board() {
           item.marked = true;
         }
         return item;
-      })
+      });
 
-      setItems(updatedItems);
-      setMarkedItems(updatedMarkedItems);
+      setData({
+        ...data.savedItems,
+        items: updatedItems,
+        markedItems: markedItems
+      })
       localStorage.setItem('markedItems', JSON.stringify(updatedMarkedItems));
     }
   }
 
   const handleSaveClick = (id) => {
+    const { items, savedItems } = data;
     const newSavedItems = { ...savedItems };
     const updatedItems = items.map(item => {
       if (item.id === id) {
@@ -122,33 +139,54 @@ function Board() {
         }
       }
       return item;
+    });
+
+    setData({
+      ...data.markedItems,
+      items: updatedItems,
+      savedItems: newSavedItems
     })
 
-    setItems(updatedItems);
-    setSavedItems(newSavedItems);
     localStorage.setItem('savedItems', JSON.stringify(newSavedItems));
   }
+
+  window.onscroll = debounce(() => {
+    const scrollX = window.innerHeight + document.documentElement.scrollTop;
+
+    if (loading !== true && scrollX >= document.documentElement.offsetHeight) {
+      setMaxLoadingItems(maxLoadingItems + 50);
+    }
+  }, 100);
+
+  const itemsToDisplay = [];
+  const items = data.items;
+
+  for (let i = 0; i < maxLoadingItems && i < items.length; i++) {
+    itemsToDisplay.push((
+      <Item
+        key={items[i].id}
+        id={items[i].id}
+        title={items[i].title}
+        writer={items[i].writer}
+        href={items[i].href}
+        date={items[i].date}
+        marked={items[i].marked}
+        saved={items[i].saved}
+        otherList={items[i].otherList}
+        countClick={handlePopupClick}
+        markClick={handleMarkClick}
+        saveClick={handleSaveClick}
+      />
+    ));
+  }
+
+  console.log(itemsToDisplay);
 
   return (
     <>
       <StyledContainer maxWidth="md">
         <Inner>
-          {items.map(item => (
-            <Item
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              writer={item.writer}
-              href={item.href}
-              date={item.date}
-              marked={item.marked}
-              saved={item.saved}
-              otherList={item.otherList}
-              countClick={handlePopupClick}
-              markClick={handleMarkClick}
-              saveClick={handleSaveClick}
-            />
-          ))}
+          {itemsToDisplay}
         </Inner>
       </StyledContainer>
       <Popup

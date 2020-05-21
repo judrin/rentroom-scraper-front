@@ -15,8 +15,10 @@ const Inner = styled.div`
 
 function Board() {
 
-  const [ savedItems, setSavedItems ] = useState({});
-  const [ markedItems, setMarkedItems ] = useState({});
+  const [ data, setData ] = useState({
+    savedItems: {},
+    markedItems: {}
+  })
 
   useEffect(() => {
     const storagedSavedItems = localStorage.getItem('savedItems');
@@ -24,33 +26,46 @@ function Board() {
     const parsedSavedItems = storagedSavedItems ? JSON.parse(storagedSavedItems) : {};
     const parsedMarkedItems = storagedMarkedItems ? JSON.parse(storagedMarkedItems) : {};
 
-    setMarkedItems(parsedMarkedItems);
-    setSavedItems(parsedSavedItems);
+    setData({
+      savedItems: parsedSavedItems,
+      markedItems: parsedMarkedItems
+    })
+
   }, []);
 
   const handleMarkClick = (id) => {
+    const { markedItems } = data;
+
     if (!markedItems[id]) {
       const updatedMarkedItems = {
         ...markedItems,
         [id]: true
       }
 
-      setMarkedItems(updatedMarkedItems);
+      setData({
+        ...data.savedItems,
+        markedItems: updatedMarkedItems
+      });
       localStorage.setItem('markedItems', JSON.stringify(updatedMarkedItems));
     }
   }
 
   const handleSaveClick = (id) => {
+    const { savedItems } = data;
     const newSavedItems = { ...savedItems };
 
     if (newSavedItems[id]) {
       delete newSavedItems[id];
     }
 
-    setSavedItems(newSavedItems);
+    setData({
+      ...data.markedItems,
+      savedItems: newSavedItems
+    });
     localStorage.setItem('savedItems', JSON.stringify(newSavedItems));
   }
 
+  const { savedItems } = data;
   const sortedItems = Object.values(savedItems).sort((a, b) => b.id - a.id);
 
   return (
