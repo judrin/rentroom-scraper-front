@@ -38,7 +38,7 @@ function Board() {
     const parsedMarkedItems = storagedMarkedItems ? JSON.parse(storagedMarkedItems) : {};
     const parsedSavedItems = storagedSavedItems ? JSON.parse(storagedSavedItems) : {};
 
-    axios.get('https://d3azinm4se.execute-api.ca-central-1.amazonaws.com/dev/posts')
+    axios.get('https://nfikybkowh.execute-api.ca-central-1.amazonaws.com/dev/posts')
     .then(response => {
       const data = response.data.result
       const lists = [];
@@ -74,8 +74,6 @@ function Board() {
 
         lists.push(list);
       }
-
-      console.log('before set states');
 
       setData({
         items: lists,
@@ -179,8 +177,6 @@ function Board() {
       />
     ));
   }
-
-  console.log(itemsToDisplay);
 
   return (
     <>
