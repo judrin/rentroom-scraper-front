@@ -38,7 +38,7 @@ function Board() {
     const parsedMarkedItems = storagedMarkedItems ? JSON.parse(storagedMarkedItems) : {};
     const parsedSavedItems = storagedSavedItems ? JSON.parse(storagedSavedItems) : {};
 
-    axios.get('https://nfikybkowh.execute-api.ca-central-1.amazonaws.com/dev/posts')
+    axios.get('https://b8jm8vulpe.execute-api.ca-central-1.amazonaws.com/dev/posts')
     .then(response => {
       const data = response.data.result
       const lists = [];
