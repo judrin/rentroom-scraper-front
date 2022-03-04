@@ -7,27 +7,25 @@ import debounce from 'lodash.debounce';
 import Item from './Item';
 import Popup from './Popup';
 
-
 const StyledContainer = styled(Container)`
   margin-top: 3em;
-`
+`;
 
 const Inner = styled.div`
   display: grid;
   grid-gap: 10px;
-`
+`;
 
 function Board() {
-
-  const [ data, setData ] = useState({
+  const [data, setData] = useState({
     items: [],
     markedItems: {},
-    savedItems: {}
+    savedItems: {},
   });
-  const [ anchorEl, setAnchorEl ] = useState(null);
-  const [ otherItems, setOtherItems ] = useState([]);
-  const [ loading, setLoading ] = useState(true);
-  const [ maxLoadingItems, setMaxLoadingItems ] = useState(50);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [otherItems, setOtherItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [maxLoadingItems, setMaxLoadingItems] = useState(50);
 
   const open = Boolean(anchorEl);
   const popupId = open ? 'simple-popover' : undefined;
@@ -35,53 +33,58 @@ function Board() {
   useEffect(() => {
     const storagedMarkedItems = localStorage.getItem('markedItems');
     const storagedSavedItems = localStorage.getItem('savedItems');
-    const parsedMarkedItems = storagedMarkedItems ? JSON.parse(storagedMarkedItems) : {};
-    const parsedSavedItems = storagedSavedItems ? JSON.parse(storagedSavedItems) : {};
+    const parsedMarkedItems = storagedMarkedItems
+      ? JSON.parse(storagedMarkedItems)
+      : {};
+    const parsedSavedItems = storagedSavedItems
+      ? JSON.parse(storagedSavedItems)
+      : {};
 
-    axios.get('https://b8jm8vulpe.execute-api.ca-central-1.amazonaws.com/dev/posts')
-    .then(response => {
-      const data = response.data.result
-      const lists = [];
-      const writerLists = {};
+    axios
+      .get('https://applpdaxof.execute-api.us-east-1.amazonaws.com/dev/posts')
+      .then((response) => {
+        const data = response.data.result;
+        const lists = [];
+        const writerLists = {};
 
-      for (let i = 0; i < data.length; i++) {
-        const list = { ...data[i] };
-        list.otherList = [];
+        for (let i = 0; i < data.length; i++) {
+          const list = { ...data[i] };
+          list.otherList = [];
 
-        const date = new Date(list.date * 1000);
-        const yy = date.getFullYear()
-        const mm = date.getMonth() + 1;
-        const dd = date.getDate();
-        list.date = `${yy}-${('0' + mm).slice(-2)}-${dd}`;
-        list.marked = false;
-        list.saved = false;
+          const date = new Date(list.date * 1000);
+          const yy = date.getFullYear();
+          const mm = date.getMonth() + 1;
+          const dd = date.getDate();
+          list.date = `${yy}-${('0' + mm).slice(-2)}-${dd}`;
+          list.marked = false;
+          list.saved = false;
 
-        if (parsedMarkedItems[list.id]) {
-          list.marked = true;
-        }
+          if (parsedMarkedItems[list.id]) {
+            list.marked = true;
+          }
 
-        if (parsedSavedItems[list.id]) {
-          list.saved = true;
-        }
+          if (parsedSavedItems[list.id]) {
+            list.saved = true;
+          }
 
-        if (writerLists[list.writer]) {
+          if (writerLists[list.writer]) {
+            writerLists[list.writer].push(list);
+            continue;
+          }
+
+          writerLists[list.writer] = list.otherList;
           writerLists[list.writer].push(list);
-          continue;
+
+          lists.push(list);
         }
 
-        writerLists[list.writer] = list.otherList;
-        writerLists[list.writer].push(list);
-
-        lists.push(list);
-      }
-
-      setData({
-        items: lists,
-        markedItems: parsedMarkedItems,
-        savedItems: parsedSavedItems
+        setData({
+          items: lists,
+          markedItems: parsedMarkedItems,
+          savedItems: parsedSavedItems,
+        });
+        setLoading(false);
       });
-      setLoading(false);
-    })
   }, []);
 
   const handlePopupClick = (event, lists) => {
@@ -100,10 +103,10 @@ function Board() {
     if (!markedItems[id]) {
       const updatedMarkedItems = {
         ...markedItems,
-        [id]: true
-      }
-      
-      const updatedItems = items.map(item => {
+        [id]: true,
+      };
+
+      const updatedItems = items.map((item) => {
         if (item.id === id) {
           item.marked = true;
         }
@@ -113,16 +116,16 @@ function Board() {
       setData({
         ...data.savedItems,
         items: updatedItems,
-        markedItems: markedItems
-      })
+        markedItems: markedItems,
+      });
       localStorage.setItem('markedItems', JSON.stringify(updatedMarkedItems));
     }
-  }
+  };
 
   const handleSaveClick = (id) => {
     const { items, savedItems } = data;
     const newSavedItems = { ...savedItems };
-    const updatedItems = items.map(item => {
+    const updatedItems = items.map((item) => {
       if (item.id === id) {
         item.saved = !item.saved;
 
@@ -130,7 +133,7 @@ function Board() {
           delete newSavedItems[id];
         } else {
           newSavedItems[id] = {
-            ...item
+            ...item,
           };
 
           delete newSavedItems[id].otherList;
@@ -142,11 +145,11 @@ function Board() {
     setData({
       ...data.markedItems,
       items: updatedItems,
-      savedItems: newSavedItems
-    })
+      savedItems: newSavedItems,
+    });
 
     localStorage.setItem('savedItems', JSON.stringify(newSavedItems));
-  }
+  };
 
   window.onscroll = debounce(() => {
     const scrollX = window.innerHeight + document.documentElement.scrollTop;
@@ -160,7 +163,7 @@ function Board() {
   const items = data.items;
 
   for (let i = 0; i < maxLoadingItems && i < items.length; i++) {
-    itemsToDisplay.push((
+    itemsToDisplay.push(
       <Item
         key={items[i].id}
         id={items[i].id}
@@ -175,15 +178,13 @@ function Board() {
         markClick={handleMarkClick}
         saveClick={handleSaveClick}
       />
-    ));
+    );
   }
 
   return (
     <>
       <StyledContainer maxWidth="md">
-        <Inner>
-          {itemsToDisplay}
-        </Inner>
+        <Inner>{itemsToDisplay}</Inner>
       </StyledContainer>
       <Popup
         id={popupId}
